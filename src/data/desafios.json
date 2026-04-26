@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "titulo": "Nível 1: O Clássico",
+    "instrucao": "Digite o código inicial. Quando chegar na lacuna, insira o número 10 para o console exibir o resultado.",
+    "outputEsperado": "10",
+    "partes": {
+      "antes": "print(",
+      "lacuna": "10",
+      "depois": ")"
+    }
+  },
+  {
+    "id": 2,
+    "titulo": "Nível 2: Operações Básicas",
+    "instrucao": "Complete a equação matemática no print para que o resultado exibido seja 42.",
+    "outputEsperado": "42",
+    "partes": {
+      "antes": "print(20 + ",
+      "lacuna": "22",
+      "depois": ")"
+    }
+  },
+  {
+    "id": 3,
+    "titulo": "Nível 3: Índices de Lista",
+    "instrucao": "Acesse o segundo elemento da lista (lembre-se que listas começam no índice 0).",
+    "outputEsperado": "Maçã",
+    "partes": {
+      "antes": "print([\"Banana\", \"Maçã\", \"Uva\"][",
+      "lacuna": "1",
+      "depois": "])"
+    }
+  }
+]
