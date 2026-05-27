@@ -2,11 +2,27 @@
 import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '../store/useGameStore';
 
+const realcarSintaxe = (texto: string) => {
+  const partes = texto.split(/(\bdef\b|\bfor\b|\bin\b|\bwhile\b|\bif\b|\belse\b|\belif\b|\breturn\b|\bprint\b|\bTrue\b|\bFalse\b|\b\d+\b|"[^"]*"|'[^']*')/g);
+  return partes.map((parte, index) => {
+    if (/^(def|for|in|while|if|else|elif|return|print|True|False)$/.test(parte)) {
+      return <span key={index} className="text-pink-400 font-bold">{parte}</span>;
+    }
+    if (/^\d+$/.test(parte)) {
+      return <span key={index} className="text-purple-300">{parte}</span>;
+    }
+    if (/^".*"$|^'.*'$/.test(parte)) {
+      return <span key={index} className="text-orange-300">{parte}</span>;
+    }
+    return <span key={index}>{parte}</span>;
+  });
+};
+
 export default function TelaDeCodigo() {
   const { 
     desafioAtual, 
     textoDigitado, 
-    processarTecla, 
+    lacunaPreenchida,
     status, 
     erros, 
     validarLacuna 
@@ -14,23 +30,21 @@ export default function TelaDeCodigo() {
 
   const [inputLacuna, setInputLacuna] = useState('');
   const [isShaking, setIsShaking] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Foca automaticamente no input quando entra no modo lacuna
   useEffect(() => {
-    if (status === 'NA_LACUNA' && inputRef.current) {
-      inputRef.current.focus();
+    if (status === 'NA_LACUNA' && textareaRef.current) {
+      textareaRef.current.focus();
     }
   }, [status]);
 
-  // Limpa o input apenas quando a fase mudar para a digitação final (sucesso na compilação)
+  // Limpa a caixa de texto sempre que uma nova fase inicia ou o script é reiniciado
   useEffect(() => {
-    if (status === 'DIGITANDO_DEPOIS') {
+    if (status === 'DIGITANDO_ANTES') {
       setInputLacuna('');
     }
   }, [status]);
-
-  // Efeito de tremer a tela quando um erro é cometido
+  
   useEffect(() => {
     if (erros > 0) {
       setIsShaking(true);
@@ -39,30 +53,27 @@ export default function TelaDeCodigo() {
     }
   }, [erros]);
 
-  // Escuta as teclas para a digitação guiada
-  useEffect(() => {
-    const lidarComTeclado = (evento: KeyboardEvent) => {
-      // Ignora digitação guiada se estiver na lacuna ou validando o Python
-      if (status === 'NA_LACUNA' || status === 'VALIDANDO') return;
-      if (evento.key.length !== 1) return;
-      if (evento.key === ' ') evento.preventDefault();
+  // AQUI REMOVEMOS AQUELE USE_EFFECT GIGANTE QUE ESCUTAVA O TECLADO! 
+  // Agora o TecladoVirtual é quem manda.
 
-      processarTecla(evento.key);
-    };
-
-    window.addEventListener('keydown', lidarComTeclado);
-    return () => window.removeEventListener('keydown', lidarComTeclado);
-  }, [processarTecla, status]);
-
-  const handleSubmeterLacuna = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && status !== 'VALIDANDO') {
-      validarLacuna(inputLacuna);
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (status === 'VALIDANDO') return;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+      const novoTexto = inputLacuna.substring(0, start) + "    " + inputLacuna.substring(end);
+      setInputLacuna(novoTexto);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + 4;
+        }
+      }, 0);
     }
   };
 
   const renderizarTrechoGuiado = (textoAlvo: string, isAtivo: boolean) => {
     if (!isAtivo) return <span className="text-gray-500">{textoAlvo}</span>;
-
     const digitado = textoAlvo.slice(0, textoDigitado.length);
     const textoFaltante = textoAlvo.slice(textoDigitado.length);
     const caractereAtual = textoFaltante.charAt(0);
@@ -70,10 +81,10 @@ export default function TelaDeCodigo() {
 
     return (
       <>
-        <span className="text-emerald-400">{digitado}</span>
+        <span>{realcarSintaxe(digitado)}</span>
         {caractereAtual && (
-          <span className="bg-blue-600/40 text-blue-100 border-b-4 border-blue-500 animate-pulse">
-            {caractereAtual === ' ' ? '\u00A0' : caractereAtual}
+          <span className="bg-blue-600/40 text-blue-100 border-b-4 border-blue-500 animate-pulse relative">
+            {caractereAtual === ' ' ? '\u00A0' : caractereAtual === '\n' ? '↵\n' : caractereAtual}
           </span>
         )}
         <span className="text-gray-500">{restoDoTexto}</span>
@@ -81,19 +92,18 @@ export default function TelaDeCodigo() {
     );
   };
 
-  // Como o usuário pode digitar uma lógica diferente da padrão (ex: 5 + 5 em vez de 10)
-  // vamos mostrar a resposta que ele digitou se ele tiver acertado
-  const respostaExibida = inputLacuna.trim() !== '' && (status === 'DIGITANDO_DEPOIS' || status === 'CONCLUIDO') 
-    ? inputLacuna 
+  const respostaExibida = status === 'DIGITANDO_DEPOIS' || status === 'CONCLUIDO'
+    ? lacunaPreenchida
     : desafioAtual.partes.lacuna;
+
+  const linhasTextarea = Math.max(2, inputLacuna.split('\n').length);
 
   return (
     <div className="flex flex-col items-center gap-4 w-full max-w-4xl">
       
-      {/* Console Output */}
       <div className="w-full bg-black border border-gray-800 p-4 rounded-md font-mono text-sm text-gray-300 shadow-inner">
         <div className="text-gray-500 mb-2">// Console Output Esperado:</div>
-        <div className="text-green-400 font-bold">{desafioAtual.outputEsperado}</div>
+        <div className="text-green-400 font-bold whitespace-pre-wrap">{desafioAtual.outputEsperado}</div>
       </div>
 
       <div className="flex justify-between w-full text-gray-400 text-sm font-mono px-2 mt-2">
@@ -102,50 +112,54 @@ export default function TelaDeCodigo() {
         {status === 'VALIDANDO' && <span className="text-yellow-400 font-bold animate-pulse">COMPILANDO...</span>}
       </div>
 
-      {/* Editor de Código (Agora reage a erros) */}
       <div className={`
-        p-8 rounded-lg shadow-2xl font-mono text-2xl text-left w-full tracking-wider leading-relaxed flex flex-wrap items-center transition-colors duration-200
+        p-8 rounded-lg shadow-2xl font-mono text-2xl text-left w-full tracking-wider leading-relaxed whitespace-pre-wrap transition-colors duration-200
         ${isShaking ? 'bg-red-950/30 border-2 border-red-500 animate-shake' : 'bg-gray-900 border border-gray-700'}
       `}>
         
-        {/* PARTE 1 */}
         {status === 'DIGITANDO_ANTES' 
           ? renderizarTrechoGuiado(desafioAtual.partes.antes, true)
-          : <span className="text-emerald-400">{desafioAtual.partes.antes}</span>
+          : <span>{realcarSintaxe(desafioAtual.partes.antes)}</span>
         }
 
-        {/* PARTE 2: A Lacuna */}
         {status === 'DIGITANDO_ANTES' && (
           <span className="mx-2 text-gray-700 bg-gray-800 px-2 rounded">???</span>
         )}
         
         {(status === 'NA_LACUNA' || status === 'VALIDANDO') && (
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputLacuna}
-            onChange={(e) => setInputLacuna(e.target.value)}
-            onKeyDown={handleSubmeterLacuna}
-            disabled={status === 'VALIDANDO'}
-            className={`
-              mx-2 outline-none border-b-2 text-center px-1 font-bold min-w-[6rem] transition-colors
-              ${status === 'VALIDANDO' ? 'bg-gray-700 text-gray-400 border-gray-500 cursor-not-allowed' : ''}
-              ${isShaking ? 'bg-red-900/50 text-red-200 border-red-500' : 'bg-gray-800 text-yellow-400 border-yellow-500'}
-            `}
-            placeholder="..."
-            style={{ width: `${Math.max(6, inputLacuna.length)}ch` }} /* Expande conforme digita */
-          />
+          <div className="inline-flex flex-col relative w-full mt-2 mb-2 pl-4 border-l-2 border-blue-500/50">
+            <textarea
+              ref={textareaRef}
+              value={inputLacuna}
+              onChange={(e) => setInputLacuna(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
+              disabled={status === 'VALIDANDO'}
+              rows={linhasTextarea}
+              className={`
+                outline-none bg-gray-800/80 text-yellow-300 p-2 rounded resize-none w-full transition-colors leading-relaxed
+                ${status === 'VALIDANDO' ? 'opacity-50 cursor-not-allowed' : 'focus:ring-1 focus:ring-blue-500'}
+              `}
+              placeholder="Digite a lógica aqui... (Enter pula linha)"
+              spellCheck="false"
+            />
+            <button
+              onClick={() => validarLacuna(inputLacuna)}
+              disabled={status === 'VALIDANDO'}
+              className="mt-3 self-end px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold shadow-md transition-all active:scale-95"
+            >
+              ▶ Executar Lógica
+            </button>
+          </div>
         )}
 
         {(status === 'DIGITANDO_DEPOIS' || status === 'CONCLUIDO') && (
-          <span className="mx-2 text-yellow-400 font-bold">{respostaExibida}</span>
+          <span className="text-yellow-400 font-bold">{realcarSintaxe(respostaExibida)}</span>
         )}
 
-        {/* PARTE 3 */}
         {status === 'DIGITANDO_DEPOIS' 
           ? renderizarTrechoGuiado(desafioAtual.partes.depois, true)
           : status === 'CONCLUIDO' 
-            ? <span className="text-emerald-400">{desafioAtual.partes.depois}</span>
+            ? <span>{realcarSintaxe(desafioAtual.partes.depois)}</span>
             : <span className="text-gray-500">{desafioAtual.partes.depois}</span>
         }
 

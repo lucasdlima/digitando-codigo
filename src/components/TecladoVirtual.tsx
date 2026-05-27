@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/useGameStore';
 
-// Mapeamento de quais teclas precisam do Shift e qual é a tecla base delas
 const shiftMap: Record<string, string> = {
   '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
   '^': '6', '&': '7', '*': '8', '(': '9', ')': '0',
@@ -10,7 +9,6 @@ const shiftMap: Record<string, string> = {
   ':': ';', '"': "'", '<': ',', '>': '.', '?': '/',
 };
 
-// Cores didáticas para cada dedo
 const fingerColors: Record<string, string> = {
   mindinhoE: 'border-b-4 border-pink-500',
   anelarE: 'border-b-4 border-orange-500',
@@ -22,6 +20,19 @@ const fingerColors: Record<string, string> = {
   anelarD: 'border-b-4 border-orange-500',
   mindinhoD: 'border-b-4 border-pink-500',
   nenhum: 'border-b-4 border-gray-700',
+};
+
+const fingerActiveColors: Record<string, string> = {
+  mindinhoE: 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.7)]',
+  anelarE: 'bg-orange-600 text-white shadow-[0_0_15px_rgba(234,88,12,0.7)]',
+  medioE: 'bg-yellow-600 text-white shadow-[0_0_15px_rgba(202,138,4,0.7)]',
+  indicadorE: 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.7)]',
+  polegar: 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.7)]',
+  indicadorD: 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.7)]',
+  medioD: 'bg-yellow-600 text-white shadow-[0_0_15px_rgba(202,138,4,0.7)]',
+  anelarD: 'bg-orange-600 text-white shadow-[0_0_15px_rgba(234,88,12,0.7)]',
+  mindinhoD: 'bg-pink-600 text-white shadow-[0_0_15px_rgba(219,39,119,0.7)]',
+  nenhum: 'bg-gray-600 text-white shadow-[0_0_15px_rgba(75,85,99,0.7)]',
 };
 
 const keyboardLayout = [
@@ -92,10 +103,79 @@ const keyboardLayout = [
 ];
 
 export default function TecladoVirtual() {
+  // Apenas lemos esses dados para renderização visual
   const { status, desafioAtual, textoDigitado } = useGameStore();
   const [teclaErrada, setTeclaErrada] = useState<string | null>(null);
+  const [teclaCorreta, setTeclaCorreta] = useState<string | null>(null);
 
-  // Descobre qual é a letra que o jogador precisa apertar agora
+  // Escutador Mestre do Teclado
+  useEffect(() => {
+    const handleTeclado = (evento: KeyboardEvent) => {
+      const state = useGameStore.getState();
+      if (state.status === 'NA_LACUNA' || state.status === 'VALIDANDO' || state.status === 'CONCLUIDO') return;
+
+      // Inicia o cronômetro no primeiro toque na tecla
+      state.iniciarTimer();
+
+      let teclaPressionada = evento.key;
+      if (teclaPressionada === 'Enter') {
+        teclaPressionada = '\n';
+        evento.preventDefault();
+        evento.stopPropagation();
+      }
+
+      if (teclaPressionada.length !== 1) return;
+      evento.preventDefault(); 
+
+      let charEsperado: string | null = null;
+      if (state.status === 'DIGITANDO_ANTES') {
+        charEsperado = state.desafioAtual.partes.antes[state.textoDigitado.length] || null;
+      } else if (state.status === 'DIGITANDO_DEPOIS') {
+        charEsperado = state.desafioAtual.partes.depois[state.textoDigitado.length] || null;
+      }
+
+      if (!charEsperado) return;
+
+      // --- NOVA LÓGICA DE IDENTIFICAÇÃO DE DEDO ---
+      let targetKeyId = charEsperado.toLowerCase();
+      if (targetKeyId === ' ') targetKeyId = 'space';
+      else if (targetKeyId === '\n') targetKeyId = 'enter';
+      else if (shiftMap[charEsperado]) targetKeyId = shiftMap[charEsperado];
+
+      // Busca qual dedo é responsável por essa tecla esperada
+      let dedoResponsavel: string = 'nenhum';
+      for (const row of keyboardLayout) {
+        const key = row.find(k => k.id === targetKeyId);
+        if (key && key.finger) {
+          dedoResponsavel = key.finger;
+          break;
+        }
+      }
+      // ---------------------------------------------
+
+      let keyId = teclaPressionada.toLowerCase();
+      if (keyId === ' ') keyId = 'space';
+      else if (keyId === '\n') keyId = 'enter';
+      else if (shiftMap[teclaPressionada]) keyId = shiftMap[teclaPressionada];
+
+      // Registra a métrica e pisca a cor
+      if (teclaPressionada === charEsperado) {
+        state.registrarToque(dedoResponsavel as any, true);
+        setTeclaCorreta(keyId);
+        setTimeout(() => setTeclaCorreta(null), 100);
+      } else {
+        state.registrarToque(dedoResponsavel as any, false);
+        setTeclaErrada(keyId);
+        setTimeout(() => setTeclaErrada(null), 300);
+      }
+
+      state.processarTecla(teclaPressionada);
+    };
+
+    window.addEventListener('keydown', handleTeclado, true);
+    return () => window.removeEventListener('keydown', handleTeclado, true);
+  }, []);
+
   let caractereAtual: string | null = null;
   if (status === 'DIGITANDO_ANTES') {
     caractereAtual = desafioAtual.partes.antes[textoDigitado.length] || null;
@@ -103,49 +183,14 @@ export default function TecladoVirtual() {
     caractereAtual = desafioAtual.partes.depois[textoDigitado.length] || null;
   }
 
-  // Lógica para interceptar teclas erradas e aplicar o feedback visual
-  useEffect(() => {
-    const handleErroTeclado = (e: KeyboardEvent) => {
-      // Ignora se estiver na fase de pensar ou concluído
-      if (status === 'NA_LACUNA' || status === 'CONCLUIDO' || !caractereAtual) return;
-      
-      // Ignora teclas de controle (Shift, Tab, Caps, etc)
-      if (e.key.length !== 1) return;
-
-      // Se errou a tecla
-      if (e.key !== caractereAtual) {
-        let wrongKeyId = e.key.toLowerCase();
-        
-        // Mapeia espaços e caracteres especiais para seus respectivos IDs no teclado virtual
-        if (wrongKeyId === ' ') {
-          wrongKeyId = 'space';
-        } else if (shiftMap[e.key]) {
-          wrongKeyId = shiftMap[e.key];
-        }
-
-        setTeclaErrada(wrongKeyId);
-
-        // Limpa o erro após 300ms para criar o efeito de "piscar"
-        setTimeout(() => {
-          setTeclaErrada(null);
-        }, 300);
-      }
-    };
-
-    window.addEventListener('keydown', handleErroTeclado);
-    return () => window.removeEventListener('keydown', handleErroTeclado);
-  }, [caractereAtual, status]);
-
-  // Lógica para descobrir se a tecla alvo precisa de Shift e qual é a base dela
   let teclaAlvoId = caractereAtual?.toLowerCase();
   let precisaShift = false;
 
   if (caractereAtual) {
-    if (caractereAtual === ' ') {
-      teclaAlvoId = 'space';
-    } else if (caractereAtual >= 'A' && caractereAtual <= 'Z') {
-      precisaShift = true;
-    } else if (shiftMap[caractereAtual]) {
+    if (caractereAtual === ' ') teclaAlvoId = 'space';
+    else if (caractereAtual === '\n') teclaAlvoId = 'enter';
+    else if (caractereAtual >= 'A' && caractereAtual <= 'Z') precisaShift = true;
+    else if (shiftMap[caractereAtual]) {
       precisaShift = true;
       teclaAlvoId = shiftMap[caractereAtual];
     }
@@ -165,24 +210,29 @@ export default function TecladoVirtual() {
             {row.map((key) => {
               const ativa = isTeclaAtiva(key.id);
               const isErro = teclaErrada === key.id;
-              const colorClass = fingerColors[key.finger] || fingerColors.nenhum;
+              const isSucesso = teclaCorreta === key.id;
+              
+              let classesEstado = '';
+
+              if (isErro) {
+                classesEstado = `bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.8)] transform scale-95 border-none z-20`;
+              } else if (isSucesso) {
+                classesEstado = `bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.8)] transform scale-95 border-none z-20`;
+              } else if (ativa) {
+                const corAtiva = fingerActiveColors[key.finger] || fingerActiveColors.nenhum;
+                classesEstado = `${corAtiva} transform scale-105 z-10 border-none`;
+              } else {
+                const corBase = fingerColors[key.finger] || fingerColors.nenhum;
+                classesEstado = `bg-gray-800 text-gray-400 ${corBase}`;
+              }
               
               return (
                 <div
                   key={key.id}
-                  className={`
-                    relative flex flex-col items-center justify-center rounded-md font-mono text-sm transition-all duration-150
-                    ${key.width || 'w-12'} h-12
-                    ${isErro 
-                      ? `bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.8)] transform scale-95 border-none z-20`
-                      : ativa 
-                        ? `bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.6)] transform scale-105 z-10 border-none` 
-                        : `bg-gray-800 text-gray-400 ${colorClass}`
-                    }
-                  `}
+                  className={`relative flex flex-col items-center justify-center rounded-md font-mono text-sm transition-all duration-75 ${key.width || 'w-12'} h-12 ${classesEstado}`}
                 >
                   {key.shift && (
-                    <span className={`absolute top-1 left-2 text-[10px] ${ativa || isErro ? 'text-white/70' : 'text-gray-500'}`}>
+                    <span className={`absolute top-1 left-2 text-[10px] ${ativa || isErro || isSucesso ? 'text-white/70' : 'text-gray-500'}`}>
                       {key.shift}
                     </span>
                   )}
