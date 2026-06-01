@@ -33,9 +33,9 @@ function App() {
       
       <div className="text-center mb-6">
         <h1 className="text-4xl font-bold text-blue-400 mb-2">
-          Aprendiz de Código
+          Digitando Código
         </h1>
-        <p className="text-gray-400 font-mono">Prática de Memória Muscular para Programadores</p>
+        <p className="text-gray-400 font-mono">Prática de Digitação e Lógica para Programadores</p>
       </div>
 
       <div className="w-full max-w-4xl bg-gray-800/50 border border-gray-700 p-5 rounded-md mb-6 shadow-md text-left">

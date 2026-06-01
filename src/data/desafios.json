@@ -5,15 +5,15 @@
     "instrucao": "Complete a estrutura do loop range e o incremento para somar os números de 1 a 100.",
     "outputEsperado": "5050",
     "partes": {
-      "antes": "soma = 0\n\nfor numero in ",
+      "antes": "soma = 0\nfor numero in ",
       "lacuna": "range(1, 101):\n    soma += numero",
-      "depois": "\n\nprint(soma)"
+      "depois": "\nprint(soma)"
     }
   },
   {
     "id": 1,
     "titulo": "Nível 1: O Clássico",
-    "instrucao": "Digite o código inicial. Quando chegar na lacuna, insira o número 10 para o console exibir o resultado.",
+    "instrucao": "Digite o código inicial. Quando chegar na lacuna, insira o valor para atingir o resultado esperado.",
     "outputEsperado": "10",
     "partes": {
       "antes": "print(",
