@@ -24,10 +24,10 @@
   {
     "id": 3,
     "titulo": "Nível 3: Índices de Lista",
-    "instrucao": "Acesse o segundo elemento da lista (lembre-se que listas começam no índice 0).",
-    "outputEsperado": "Maçã",
+    "instrucao": "Acesse o segundo elemento da lista.",
+    "outputEsperado": "Goiaba",
     "partes": {
-      "antes": "print([\"Banana\", \"Maçã\", \"Uva\"][",
+      "antes": "print([\"Banana\", \"Goiaba\", \"Uva\"][",
       "lacuna": "1",
       "depois": "])"
     }
