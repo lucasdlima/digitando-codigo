@@ -15,29 +15,26 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col items-center py-12 bg-slate-950 text-slate-300 selection:bg-cyan-900 selection:text-cyan-50 relative overflow-hidden font-sans">
       
-      {/* Efeito de luz de fundo (Glow) para estética moderna */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-900/20 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="w-full max-w-5xl px-4 z-10 flex flex-col items-center">
         
-        {/* Header Global */}
+        {/* Header Global Atualizado */}
         <div className="text-center mb-12 w-full">
-          <h1 className="text-5xl font-extrabold mb-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 drop-shadow-sm">
+          <h1 className="text-5xl font-extrabold mb-1 pb-2 leading-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 drop-shadow-sm">
             Digitando Código
           </h1>
           <p className="text-slate-400 font-mono text-sm uppercase tracking-widest">
-            Prática de Memória Muscular para Programadores
+            Prática de digitação e Programação
           </p>
         </div>
 
-        {/* ROTEAMENTO DE TELA VIA ESTADO */}
         {telaAtual === 'MENU' ? (
           <MenuInicial />
         ) : (
           <div className="w-full flex flex-col items-center animate-fade-in">
             
-            {/* Header da Fase */}
             <div className="w-full max-w-4xl flex justify-between items-start md:items-end mb-6 px-6 py-5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-md shadow-lg">
               <div>
                 <span className="text-[11px] font-mono text-cyan-500 font-bold uppercase tracking-widest mb-1 block">
@@ -59,7 +56,6 @@ function App() {
             
             {status === 'CONCLUIDO' ? <PainelMetricas /> : <TecladoVirtual />}
 
-            {/* Botões Inferiores */}
             <div className="flex gap-4 mt-10">
               <button 
                 type="button"
