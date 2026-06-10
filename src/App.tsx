@@ -1,7 +1,7 @@
 import TelaDeCodigo from './components/TelaDeCodigo';
 import TecladoVirtual from './components/TecladoVirtual';
 import PainelMetricas from './components/PainelMetricas';
-import MenuInicial from './components/MenuInicial'; // <-- Importa o menu
+import MenuInicial from './components/MenuInicial';
 import { useGameStore } from './store/useGameStore';
 
 function App() {
@@ -9,66 +9,79 @@ function App() {
 
   const handleReiniciar = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur();
-    // Reinicia acionando a própria fase novamente
     useGameStore.getState().iniciarDesafio(desafioAtual); 
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-10 bg-gray-950 text-gray-100">
+    <div className="min-h-screen flex flex-col items-center py-12 bg-slate-950 text-slate-300 selection:bg-cyan-900 selection:text-cyan-50 relative overflow-hidden font-sans">
       
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-blue-400 mb-2 drop-shadow-[0_0_10px_rgba(37,99,235,0.8)]">
-          Aprendiz de Código
-        </h1>
-        <p className="text-gray-400 font-mono">Prática de Memória Muscular para Programadores</p>
-      </div>
+      {/* Efeito de luz de fundo (Glow) para estética moderna */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-900/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* ROTEAMENTO DE TELA VIA ESTADO */}
-      {telaAtual === 'MENU' ? (
-        <MenuInicial />
-      ) : (
-        <>
-          <div className="w-full max-w-4xl flex justify-between items-end mb-4 px-2">
-            <div>
-              <h2 className="text-xl font-bold text-blue-300">{desafioAtual.titulo}</h2>
-              <p className="text-gray-400 mt-1 max-w-2xl">{desafioAtual.instrucao}</p>
-            </div>
+      <div className="w-full max-w-5xl px-4 z-10 flex flex-col items-center">
+        
+        {/* Header Global */}
+        <div className="text-center mb-12 w-full">
+          <h1 className="text-5xl font-extrabold mb-3 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 drop-shadow-sm">
+            Digitando Código
+          </h1>
+          <p className="text-slate-400 font-mono text-sm uppercase tracking-widest">
+            Prática de Memória Muscular para Programadores
+          </p>
+        </div>
+
+        {/* ROTEAMENTO DE TELA VIA ESTADO */}
+        {telaAtual === 'MENU' ? (
+          <MenuInicial />
+        ) : (
+          <div className="w-full flex flex-col items-center animate-fade-in">
             
-            <button 
-              onClick={voltarParaMenu}
-              className="text-gray-500 hover:text-gray-300 font-mono text-sm underline transition-colors"
-            >
-              ← Voltar ao Menu
-            </button>
-          </div>
+            {/* Header da Fase */}
+            <div className="w-full max-w-4xl flex justify-between items-start md:items-end mb-6 px-6 py-5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-md shadow-lg">
+              <div>
+                <span className="text-[11px] font-mono text-cyan-500 font-bold uppercase tracking-widest mb-1 block">
+                  {desafioAtual.categoria}
+                </span>
+                <h2 className="text-2xl font-bold text-slate-100">{desafioAtual.titulo}</h2>
+                <p className="text-slate-400 mt-1 text-sm max-w-2xl leading-relaxed">{desafioAtual.instrucao}</p>
+              </div>
+              
+              <button 
+                onClick={voltarParaMenu}
+                className="text-slate-500 hover:text-cyan-400 font-mono text-sm transition-colors flex items-center gap-2 group mt-4 md:mt-0"
+              >
+                <span className="group-hover:-translate-x-1 transition-transform">←</span> Menu
+              </button>
+            </div>
 
-          <TelaDeCodigo />
-          
-          {status === 'CONCLUIDO' ? <PainelMetricas /> : <TecladoVirtual />}
+            <TelaDeCodigo />
+            
+            {status === 'CONCLUIDO' ? <PainelMetricas /> : <TecladoVirtual />}
 
-          {/* Botões Inferiores */}
-          <div className="flex gap-4 mt-8">
-            <button 
-              type="button"
-              onClick={handleReiniciar}
-              className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono rounded-md border border-gray-600 transition-colors"
-            >
-              Reiniciar Script
-            </button>
-
-            {status === 'CONCLUIDO' && (
+            {/* Botões Inferiores */}
+            <div className="flex gap-4 mt-10">
               <button 
                 type="button"
-                onClick={voltarParaMenu}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold font-mono rounded-md shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all transform hover:scale-105"
+                onClick={handleReiniciar}
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-sm rounded-lg border border-slate-700 hover:border-slate-500 transition-all shadow-sm"
               >
-                Concluir e Voltar ➔
+                ⟳ Reiniciar Script
               </button>
-            )}
-          </div>
-        </>
-      )}
 
+              {status === 'CONCLUIDO' && (
+                <button 
+                  type="button"
+                  onClick={voltarParaMenu}
+                  className="px-8 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold font-mono text-sm rounded-lg shadow-[0_0_20px_rgba(8,145,178,0.3)] transition-all transform hover:scale-105"
+                >
+                  Concluir e Voltar ➔
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

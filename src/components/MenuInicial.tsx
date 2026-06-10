@@ -5,56 +5,62 @@ import type { Desafio } from '../types/game';
 export default function MenuInicial() {
   const { iniciarDesafio } = useGameStore();
 
-  // Agrupa os desafios do JSON por categoria automaticamente
   const desafiosPorCategoria = (desafiosData as Desafio[]).reduce((acumulador, desafio) => {
-    if (!acumulador[desafio.categoria]) {
-      acumulador[desafio.categoria] = [];
-    }
+    if (!acumulador[desafio.categoria]) acumulador[desafio.categoria] = [];
     acumulador[desafio.categoria].push(desafio);
     return acumulador;
   }, {} as Record<string, Desafio[]>);
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 bg-gray-900 rounded-xl border border-gray-800 shadow-2xl animate-fade-in">
-      <h2 className="text-2xl font-bold text-gray-200 mb-6 border-b border-gray-800 pb-2">
-        Trilha de Conhecimento
-      </h2>
-
-      <div className="flex flex-col gap-8">
-        {Object.entries(desafiosPorCategoria).map(([categoria, desafios]) => (
-          <div key={categoria}>
-            <h3 className="text-lg font-mono text-blue-400 mb-4 tracking-wider uppercase">
+    <div className="w-full flex flex-col gap-12 animate-fade-in pb-10">
+      {Object.entries(desafiosPorCategoria).map(([categoria, desafios]) => (
+        <section key={categoria} className="w-full relative">
+          
+          <div className="flex items-center gap-4 mb-6">
+            <h3 className="text-xl font-bold text-slate-200 tracking-wide">
               {categoria}
             </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {desafios.map((desafio) => (
-                <button
-                  key={desafio.id}
-                  onClick={() => iniciarDesafio(desafio)}
-                  className="flex flex-col text-left p-4 bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-blue-500 rounded-lg transition-all duration-200 group hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] hover:-translate-y-1"
-                >
-                  <span className="text-gray-400 text-xs font-mono mb-1 group-hover:text-blue-300">
-                    Desafio #{desafio.id}
-                  </span>
-                  <span className="text-gray-100 font-bold text-md mb-2">
-                    {desafio.titulo}
-                  </span>
-                  <p className="text-gray-500 text-sm line-clamp-2">
-                    {desafio.instrucao}
-                  </p>
-                  
-                  {/* Espaço reservado para os recordes futuros */}
-                  <div className="mt-4 pt-3 border-t border-gray-700 flex justify-between text-xs text-gray-500 font-mono">
-                    <span>Melhor Tempo: --</span>
-                    <span>WPM: --</span>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <div className="h-px bg-slate-800 flex-1 mt-1"></div>
           </div>
-        ))}
-      </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {desafios.map((desafio) => (
+              <button
+                key={desafio.id}
+                onClick={() => iniciarDesafio(desafio)}
+                className="flex flex-col text-left p-6 bg-slate-900/80 backdrop-blur-sm border border-slate-800 hover:border-cyan-500/50 rounded-xl transition-all duration-300 group hover:shadow-[0_8px_30px_rgba(8,145,178,0.15)] hover:-translate-y-1 relative overflow-hidden"
+              >
+                {/* Borda superior interativa */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/0 to-transparent group-hover:via-cyan-500/80 transition-all duration-500"></div>
+
+                <div className="flex justify-between items-start w-full mb-3">
+                  <span className="bg-slate-950 text-cyan-400 border border-slate-800 px-2 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-wider shadow-sm">
+                    Fase {desafio.id}
+                  </span>
+                </div>
+                
+                <span className="text-slate-100 font-bold text-lg mb-2 group-hover:text-cyan-50 transition-colors">
+                  {desafio.titulo}
+                </span>
+                
+                <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed flex-1">
+                  {desafio.instrucao}
+                </p>
+                
+                <div className="mt-6 pt-4 border-t border-slate-800 flex justify-between items-center w-full">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-600 font-mono uppercase tracking-wider">Status</span>
+                    <span className="text-xs text-slate-400 font-mono">Pronto para iniciar</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center group-hover:bg-cyan-900/30 group-hover:border-cyan-500/40 transition-colors">
+                    <span className="text-cyan-500 text-sm leading-none transform group-hover:translate-x-0.5 transition-transform">➔</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
