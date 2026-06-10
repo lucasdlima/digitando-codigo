@@ -9,7 +9,13 @@ export type FingerName = 'mindinhoE' | 'anelarE' | 'medioE' | 'indicadorE' | 'po
 interface FingerStats {
   acertos: number;
   erros: number;
-  atrasoAcumulado: number; // Em milissegundos
+  atrasoAcumulado: number;
+}
+
+// --- NOVO: Interface de Recordes ---
+interface Recorde {
+  tempoMs: number;
+  wpm: number;
 }
 
 const initialMetricas: Record<FingerName, FingerStats> = {
@@ -21,23 +27,24 @@ const initialMetricas: Record<FingerName, FingerStats> = {
 };
 
 interface GameState {
-
   telaAtual: 'MENU' | 'JOGO';
-  voltarParaMenu: () => void;
-  iniciarDesafio: (desafio: Desafio) => void;
-
   desafioAtual: Desafio;
   textoDigitado: string;
   lacunaPreenchida: string;
   status: GameStatus;
   erros: number;
   
-  // Cronômetro Pausável e Dinâmica de Digitação
   tempoAtivoTotal: number;
   ultimoInicioTempo: number | null;
   ultimoToqueAtivo: number | null;
   metricasDedos: Record<FingerName, FingerStats>;
   
+  // --- NOVO: Variável e Função de Recordes ---
+  recordes: Record<number, Recorde>;
+  salvarRecorde: (id: number, tempoMs: number, wpm: number) => void;
+  
+  voltarParaMenu: () => void;
+  iniciarDesafio: (desafio: Desafio) => void;
   processarTecla: (tecla: string) => void;
   validarLacuna: (entrada: string) => Promise<void>;
   proximoDesafio: (desafio: Desafio) => void;
@@ -47,16 +54,35 @@ interface GameState {
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
+  // Lê do cache do navegador ao abrir o app
+  recordes: JSON.parse(localStorage.getItem('digitando_codigo_recordes') || '{}'),
+  
+  telaAtual: 'MENU',
   desafioAtual: desafiosData[0] as Desafio,
   textoDigitado: '',
   lacunaPreenchida: '',
   status: 'DIGITANDO_ANTES',
   erros: 0,
-  telaAtual: 'MENU',
+  tempoAtivoTotal: 0,
+  ultimoInicioTempo: null,
+  ultimoToqueAtivo: null,
+  metricasDedos: JSON.parse(JSON.stringify(initialMetricas)),
 
-  voltarParaMenu: () => {
-    set({ telaAtual: 'MENU' });
+  // --- NOVA FUNÇÃO ---
+  salvarRecorde: (id, tempoMs, wpm) => {
+    set((state) => {
+      const recordeAntigo = state.recordes[id];
+      // Só salva se não tiver recorde, ou se o WPM for maior, ou se o WPM for igual e o tempo for menor
+      if (!recordeAntigo || wpm > recordeAntigo.wpm || (wpm === recordeAntigo.wpm && tempoMs < recordeAntigo.tempoMs)) {
+        const novosRecordes = { ...state.recordes, [id]: { tempoMs, wpm } };
+        localStorage.setItem('digitando_codigo_recordes', JSON.stringify(novosRecordes));
+        return { recordes: novosRecordes };
+      }
+      return state;
+    });
   },
+
+  voltarParaMenu: () => set({ telaAtual: 'MENU' }),
 
   iniciarDesafio: (desafioSelecionado) => {
     set({
@@ -69,19 +95,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       tempoAtivoTotal: 0,
       ultimoInicioTempo: null,
       ultimoToqueAtivo: null,
-      metricasDedos: JSON.parse(JSON.stringify(initialMetricas)) // Reseta os dedos
+      metricasDedos: JSON.parse(JSON.stringify(initialMetricas))
     });
   },
-  tempoAtivoTotal: 0,
-  ultimoInicioTempo: null,
-  ultimoToqueAtivo: null,
-  metricasDedos: JSON.parse(JSON.stringify(initialMetricas)),
 
   iniciarTimer: () => {
     const agora = Date.now();
-    if (!get().ultimoInicioTempo) {
-      set({ ultimoInicioTempo: agora, ultimoToqueAtivo: agora });
-    }
+    if (!get().ultimoInicioTempo) set({ ultimoInicioTempo: agora, ultimoToqueAtivo: agora });
   },
 
   pausarTimer: () => {
@@ -98,7 +118,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   registrarToque: (dedo, isAcerto) => {
     set((state) => {
       const agora = Date.now();
-      // Calcula a velocidade instantânea (Limitado a 1.5s para punições não desviarem a métrica se o usuário espirrar)
       const atrasoReal = state.ultimoToqueAtivo ? (agora - state.ultimoToqueAtivo) : 0;
       const atrasoValido = Math.min(atrasoReal, 1500);
 
@@ -127,7 +146,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const novoTexto = textoDigitado + teclaPressionada;
       set({ textoDigitado: novoTexto });
 
-      // PAUSA O RELÓGIO quando entra na lacuna ou conclui
       if (status === 'DIGITANDO_ANTES' && novoTexto === desafioAtual.partes.antes) {
         set({ status: 'NA_LACUNA', textoDigitado: '' }); 
         pausarTimer();
@@ -151,7 +169,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const resultadoConsole = await executarPython(codigoCompleto);
       if (resultadoConsole.trim() === desafioAtual.outputEsperado.trim()) {
         set({ status: 'DIGITANDO_DEPOIS', textoDigitado: '', lacunaPreenchida: entrada });
-        // VOLTA O RELÓGIO quando a parte final do código destrava
         iniciarTimer();
       } else {
         set((state) => ({ erros: state.erros + 1, status: 'NA_LACUNA' }));

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'; // <-- NOVO
 import { useGameStore, type FingerName } from '../store/useGameStore';
 
 const fingerLabels: Record<FingerName, string> = {
@@ -8,11 +9,9 @@ const fingerLabels: Record<FingerName, string> = {
 };
 
 export default function PainelMetricas() {
-  const { metricasDedos, tempoAtivoTotal } = useGameStore();
+  const { metricasDedos, tempoAtivoTotal, desafioAtual, salvarRecorde } = useGameStore();
 
-  // O tempo em minutos desconsidera as pausas lógicas da lacuna!
   const minutosGlobais = Math.max(tempoAtivoTotal / 60000, 0.01);
-
   let totalAcertosGlobais = 0;
   let totalErrosGlobais = 0;
 
@@ -23,6 +22,11 @@ export default function PainelMetricas() {
 
   const wpmGlobal = Math.round((totalAcertosGlobais / 5) / minutosGlobais);
   const precisaoGlobal = totalAcertosGlobais === 0 ? 0 : Math.round((totalAcertosGlobais / (totalAcertosGlobais + totalErrosGlobais)) * 100);
+
+  // --- NOVO: Dispara a verificação de recorde ao terminar a fase ---
+  useEffect(() => {
+    salvarRecorde(desafioAtual.id, tempoAtivoTotal, wpmGlobal);
+  }, [desafioAtual.id, tempoAtivoTotal, wpmGlobal, salvarRecorde]);
 
   const renderFingerStat = (key: FingerName, align: 'left' | 'right') => {
     const stats = metricasDedos[key];
