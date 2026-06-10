@@ -21,6 +21,11 @@ const initialMetricas: Record<FingerName, FingerStats> = {
 };
 
 interface GameState {
+
+  telaAtual: 'MENU' | 'JOGO';
+  voltarParaMenu: () => void;
+  iniciarDesafio: (desafio: Desafio) => void;
+
   desafioAtual: Desafio;
   textoDigitado: string;
   lacunaPreenchida: string;
@@ -47,7 +52,26 @@ export const useGameStore = create<GameState>((set, get) => ({
   lacunaPreenchida: '',
   status: 'DIGITANDO_ANTES',
   erros: 0,
-  
+  telaAtual: 'MENU',
+
+  voltarParaMenu: () => {
+    set({ telaAtual: 'MENU' });
+  },
+
+  iniciarDesafio: (desafioSelecionado) => {
+    set({
+      telaAtual: 'JOGO',
+      desafioAtual: desafioSelecionado,
+      textoDigitado: '',
+      lacunaPreenchida: '',
+      status: 'DIGITANDO_ANTES',
+      erros: 0,
+      tempoAtivoTotal: 0,
+      ultimoInicioTempo: null,
+      ultimoToqueAtivo: null,
+      metricasDedos: JSON.parse(JSON.stringify(initialMetricas)) // Reseta os dedos
+    });
+  },
   tempoAtivoTotal: 0,
   ultimoInicioTempo: null,
   ultimoToqueAtivo: null,
