@@ -1,4 +1,3 @@
-// src/components/TelaDeCodigo.tsx
 import { useEffect, useState, useRef } from 'react';
 import { useGameStore } from '../store/useGameStore';
 
@@ -38,13 +37,6 @@ export default function TelaDeCodigo() {
     }
   }, [status]);
 
-  // Limpa a caixa de texto sempre que uma nova fase inicia ou o script é reiniciado
-  useEffect(() => {
-    if (status === 'DIGITANDO_ANTES') {
-      setInputLacuna('');
-    }
-  }, [status]);
-  
   useEffect(() => {
     if (erros > 0) {
       setIsShaking(true);
@@ -53,8 +45,11 @@ export default function TelaDeCodigo() {
     }
   }, [erros]);
 
-  // AQUI REMOVEMOS AQUELE USE_EFFECT GIGANTE QUE ESCUTAVA O TECLADO! 
-  // Agora o TecladoVirtual é quem manda.
+  useEffect(() => {
+    if (status === 'DIGITANDO_ANTES') {
+      setInputLacuna('');
+    }
+  }, [status]);
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (status === 'VALIDANDO') return;
@@ -73,7 +68,7 @@ export default function TelaDeCodigo() {
   };
 
   const renderizarTrechoGuiado = (textoAlvo: string, isAtivo: boolean) => {
-    if (!isAtivo) return <span className="text-gray-500">{textoAlvo}</span>;
+    if (!isAtivo) return <span className="text-slate-600">{textoAlvo}</span>;
     const digitado = textoAlvo.slice(0, textoDigitado.length);
     const textoFaltante = textoAlvo.slice(textoDigitado.length);
     const caractereAtual = textoFaltante.charAt(0);
@@ -83,11 +78,11 @@ export default function TelaDeCodigo() {
       <>
         <span>{realcarSintaxe(digitado)}</span>
         {caractereAtual && (
-          <span className="bg-blue-600/40 text-blue-100 border-b-4 border-blue-500 animate-pulse relative">
+          <span className="bg-cyan-600/40 text-cyan-100 border-b-[3px] border-cyan-400 animate-pulse relative">
             {caractereAtual === ' ' ? '\u00A0' : caractereAtual === '\n' ? '↵\n' : caractereAtual}
           </span>
         )}
-        <span className="text-gray-500">{restoDoTexto}</span>
+        <span className="text-slate-600">{restoDoTexto}</span>
       </>
     );
   };
@@ -99,22 +94,24 @@ export default function TelaDeCodigo() {
   const linhasTextarea = Math.max(2, inputLacuna.split('\n').length);
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-4xl">
+    <div className="flex flex-col items-center gap-3 w-full">
       
-      <div className="w-full bg-black border border-gray-800 p-4 rounded-md font-mono text-sm text-gray-300 shadow-inner">
-        <div className="text-gray-500 mb-2">// Console Output Esperado:</div>
+      {/* Console Output (Margens menores p-3) */}
+      <div className="w-full bg-slate-950 border border-slate-800 p-3 rounded-lg font-mono text-xs text-slate-300 shadow-inner">
+        <div className="text-slate-500 mb-1">// Console Output Esperado:</div>
         <div className="text-green-400 font-bold whitespace-pre-wrap">{desafioAtual.outputEsperado}</div>
       </div>
 
-      <div className="flex justify-between w-full text-gray-400 text-sm font-mono px-2 mt-2">
+      <div className="flex justify-between w-full text-slate-400 text-xs font-mono px-1 mt-1">
         <span>Erros de Sintaxe/Lógica: <span className="text-red-400 font-bold">{erros}</span></span>
         {status === 'CONCLUIDO' && <span className="text-green-400 font-bold">COMPILADO COM SUCESSO</span>}
         {status === 'VALIDANDO' && <span className="text-yellow-400 font-bold animate-pulse">COMPILANDO...</span>}
       </div>
 
+      {/* Editor de Código (Diminuição da fonte para text-lg/xl e padding p-5) */}
       <div className={`
-        p-8 rounded-lg shadow-2xl font-mono text-2xl text-left w-full tracking-wider leading-relaxed whitespace-pre-wrap transition-colors duration-200
-        ${isShaking ? 'bg-red-950/30 border-2 border-red-500 animate-shake' : 'bg-gray-900 border border-gray-700'}
+        p-5 md:p-6 rounded-xl shadow-2xl font-mono text-lg md:text-xl text-left w-full tracking-wide leading-relaxed whitespace-pre-wrap transition-colors duration-200
+        ${isShaking ? 'bg-red-950/20 border border-red-500/50 animate-shake' : 'bg-slate-900 border border-slate-800'}
       `}>
         
         {status === 'DIGITANDO_ANTES' 
@@ -123,11 +120,11 @@ export default function TelaDeCodigo() {
         }
 
         {status === 'DIGITANDO_ANTES' && (
-          <span className="mx-2 text-gray-700 bg-gray-800 px-2 rounded">???</span>
+          <span className="mx-2 text-slate-700 bg-slate-950 px-2 rounded">???</span>
         )}
         
         {(status === 'NA_LACUNA' || status === 'VALIDANDO') && (
-          <div className="inline-flex flex-col relative w-full mt-2 mb-2 pl-4 border-l-2 border-blue-500/50">
+          <div className="inline-flex flex-col relative w-full mt-2 mb-2 pl-3 border-l-2 border-cyan-500/50">
             <textarea
               ref={textareaRef}
               value={inputLacuna}
@@ -136,8 +133,8 @@ export default function TelaDeCodigo() {
               disabled={status === 'VALIDANDO'}
               rows={linhasTextarea}
               className={`
-                outline-none bg-gray-800/80 text-yellow-300 p-2 rounded resize-none w-full transition-colors leading-relaxed
-                ${status === 'VALIDANDO' ? 'opacity-50 cursor-not-allowed' : 'focus:ring-1 focus:ring-blue-500'}
+                outline-none bg-slate-950/80 text-yellow-300 p-2 rounded resize-none w-full transition-colors leading-relaxed text-base md:text-lg
+                ${status === 'VALIDANDO' ? 'opacity-50 cursor-not-allowed' : 'focus:ring-1 focus:ring-cyan-500/50'}
               `}
               placeholder="Digite a lógica aqui... (Enter pula linha)"
               spellCheck="false"
@@ -145,9 +142,9 @@ export default function TelaDeCodigo() {
             <button
               onClick={() => validarLacuna(inputLacuna)}
               disabled={status === 'VALIDANDO'}
-              className="mt-3 self-end px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded font-bold shadow-md transition-all active:scale-95"
+              className="mt-2 self-end px-5 py-1.5 bg-green-600/90 hover:bg-green-500 text-white text-xs uppercase tracking-wider rounded font-bold shadow-md transition-all active:scale-95"
             >
-              ▶ Executar Lógica
+              ▶ Executar
             </button>
           </div>
         )}
@@ -160,7 +157,7 @@ export default function TelaDeCodigo() {
           ? renderizarTrechoGuiado(desafioAtual.partes.depois, true)
           : status === 'CONCLUIDO' 
             ? <span>{realcarSintaxe(desafioAtual.partes.depois)}</span>
-            : <span className="text-gray-500">{desafioAtual.partes.depois}</span>
+            : <span className="text-slate-600">{desafioAtual.partes.depois}</span>
         }
 
       </div>

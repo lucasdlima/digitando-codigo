@@ -151,8 +151,22 @@ export const useGameStore = create<GameState>((set, get) => ({
         pausarTimer();
       } 
       else if (status === 'DIGITANDO_DEPOIS' && novoTexto === desafioAtual.partes.depois) {
-        set({ status: 'CONCLUIDO' });
+        // Pausa o relógio e muda o status
         pausarTimer(); 
+        set({ status: 'CONCLUIDO' });
+        
+        // --- SALVAMENTO BLINDADO DE RECORDE ---
+        // Calcula o WPM diretamente na memória antes de qualquer renderização falhar
+        const state = get();
+        const minutos = Math.max(state.tempoAtivoTotal / 60000, 0.01);
+        let totalAcertos = 0;
+        
+        Object.values(state.metricasDedos).forEach(stats => {
+          totalAcertos += stats.acertos;
+        });
+        
+        const wpmFinal = Math.round((totalAcertos / 5) / minutos);
+        state.salvarRecorde(desafioAtual.id, state.tempoAtivoTotal, wpmFinal);
       }
     } else {
       set((state) => ({ erros: state.erros + 1 }));
