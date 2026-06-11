@@ -28,7 +28,7 @@ function App() {
               Digitando Código
             </h1>
             <p className="text-slate-400 font-mono text-sm uppercase tracking-widest">
-              Prática de digitação e Programação
+              Prática de digitação e Programação Python
             </p>
           </div>
         )}
