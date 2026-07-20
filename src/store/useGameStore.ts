@@ -12,10 +12,11 @@ interface FingerStats {
   atrasoAcumulado: number;
 }
 
-// --- NOVO: Interface de Recordes ---
+// Interface de Recordes ---
 interface Recorde {
   tempoMs: number;
   wpm: number;
+  estrelas: number;
 }
 
 const initialMetricas: Record<FingerName, FingerStats> = {
@@ -27,23 +28,26 @@ const initialMetricas: Record<FingerName, FingerStats> = {
 };
 
 interface GameState {
-  telaAtual: 'MENU' | 'JOGO';
+  telaAtual: 'MENU' | 'JOGO' | 'TUTORIAL';
   desafioAtual: Desafio;
   textoDigitado: string;
   lacunaPreenchida: string;
   status: GameStatus;
   erros: number;
-  
+  mensagemErroConsole: string | null;
   tempoAtivoTotal: number;
   ultimoInicioTempo: number | null;
   ultimoToqueAtivo: number | null;
   metricasDedos: Record<FingerName, FingerStats>;
-  
-  // --- NOVO: Variável e Função de Recordes ---
+  resultadoAtual: { wpm: number; estrelas: number } | null;
+  dicaExibida: boolean;
+  mostrarDica: () => void;
+
   recordes: Record<number, Recorde>;
-  salvarRecorde: (id: number, tempoMs: number, wpm: number) => void;
+  salvarRecorde: (id: number, tempoMs: number, wpm: number, estrelas: number) => void;
   
   voltarParaMenu: () => void;
+  abrirTutorial: () => void;
   iniciarDesafio: (desafio: Desafio) => void;
   processarTecla: (tecla: string) => void;
   validarLacuna: (entrada: string) => Promise<void>;
@@ -66,15 +70,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   tempoAtivoTotal: 0,
   ultimoInicioTempo: null,
   ultimoToqueAtivo: null,
+  mensagemErroConsole: null,
   metricasDedos: JSON.parse(JSON.stringify(initialMetricas)),
-
-  // --- NOVA FUNÇÃO ---
-  salvarRecorde: (id, tempoMs, wpm) => {
+  dicaExibida: false,
+  mostrarDica: () => set({ dicaExibida: true }),
+  resultadoAtual: null,
+  salvarRecorde: (id, tempoMs, wpm, estrelas) => {
     set((state) => {
       const recordeAntigo = state.recordes[id];
-      // Só salva se não tiver recorde, ou se o WPM for maior, ou se o WPM for igual e o tempo for menor
-      if (!recordeAntigo || wpm > recordeAntigo.wpm || (wpm === recordeAntigo.wpm && tempoMs < recordeAntigo.tempoMs)) {
-        const novosRecordes = { ...state.recordes, [id]: { tempoMs, wpm } };
+      const estrelasAntigas = recordeAntigo?.estrelas || 0;
+
+      // Só salva se ganhou mais estrelas, OU se igualou as estrelas mas bateu o WPM
+      if (!recordeAntigo || estrelas > estrelasAntigas || (estrelas === estrelasAntigas && wpm > recordeAntigo.wpm)) {
+        const novosRecordes = { ...state.recordes, [id]: { tempoMs, wpm, estrelas } };
         localStorage.setItem('digitando_codigo_recordes', JSON.stringify(novosRecordes));
         return { recordes: novosRecordes };
       }
@@ -83,6 +91,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   voltarParaMenu: () => set({ telaAtual: 'MENU' }),
+
+  abrirTutorial: () => set({ telaAtual: 'TUTORIAL' }),
 
   iniciarDesafio: (desafioSelecionado) => {
     set({
@@ -95,6 +105,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       tempoAtivoTotal: 0,
       ultimoInicioTempo: null,
       ultimoToqueAtivo: null,
+      mensagemErroConsole: null,
+      dicaExibida: false,
+      resultadoAtual: null,
       metricasDedos: JSON.parse(JSON.stringify(initialMetricas))
     });
   },
@@ -151,12 +164,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         pausarTimer();
       } 
       else if (status === 'DIGITANDO_DEPOIS' && novoTexto === desafioAtual.partes.depois) {
-        // Pausa o relógio e muda o status
         pausarTimer(); 
         set({ status: 'CONCLUIDO' });
         
-        // --- SALVAMENTO BLINDADO DE RECORDE ---
-        // Calcula o WPM diretamente na memória antes de qualquer renderização falhar
         const state = get();
         const minutos = Math.max(state.tempoAtivoTotal / 60000, 0.01);
         let totalAcertos = 0;
@@ -166,7 +176,17 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         
         const wpmFinal = Math.round((totalAcertos / 5) / minutos);
-        state.salvarRecorde(desafioAtual.id, state.tempoAtivoTotal, wpmFinal);
+
+        // --- LÓGICA DAS ESTRELAS ---
+        const metas = state.desafioAtual.metasWpm;
+        let estrelasGanhas = 0;
+        if (wpmFinal >= metas[2]) estrelasGanhas = 3;
+        else if (wpmFinal >= metas[1]) estrelasGanhas = 2;
+        else if (wpmFinal >= metas[0]) estrelasGanhas = 1;
+
+        state.salvarRecorde(desafioAtual.id, state.tempoAtivoTotal, wpmFinal, estrelasGanhas);
+
+        set({ status: 'CONCLUIDO', resultadoAtual: { wpm: wpmFinal, estrelas: estrelasGanhas } });
       }
     } else {
       set((state) => ({ erros: state.erros + 1 }));
@@ -175,20 +195,32 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   validarLacuna: async (entrada) => {
     const { desafioAtual, iniciarTimer } = get();
-    set({ status: 'VALIDANDO' });
+    // Limpa erros antigos ao tentar novamente
+    set({ status: 'VALIDANDO', mensagemErroConsole: null }); 
 
     const codigoCompleto = desafioAtual.partes.antes + entrada + desafioAtual.partes.depois;
 
     try {
       const resultadoConsole = await executarPython(codigoCompleto);
+      
       if (resultadoConsole.trim() === desafioAtual.outputEsperado.trim()) {
         set({ status: 'DIGITANDO_DEPOIS', textoDigitado: '', lacunaPreenchida: entrada });
         iniciarTimer();
       } else {
-        set((state) => ({ erros: state.erros + 1, status: 'NA_LACUNA' }));
+        // O código rodou, mas a lógica está errada
+        set((state) => ({ 
+          erros: state.erros + 1, 
+          status: 'NA_LACUNA',
+          mensagemErroConsole: `Lógica Incorreta. O console imprimiu:\n"${resultadoConsole.trim() || 'nada'}"\nMas era esperado:\n"${desafioAtual.outputEsperado.trim()}"`
+        }));
       }
-    } catch (erro) {
-      set((state) => ({ erros: state.erros + 1, status: 'NA_LACUNA' }));
+    } catch (erro: any) {
+      // O Python estourou um erro de sintaxe/execução
+      set((state) => ({ 
+        erros: state.erros + 1, 
+        status: 'NA_LACUNA',
+        mensagemErroConsole: String(erro) // Converte o erro do Skulpt para texto
+      }));
     }
   },
 
@@ -196,6 +228,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({
       desafioAtual: novoDesafio,
       textoDigitado: '',
+      mensagemErroConsole: null,
       lacunaPreenchida: '',
       status: 'DIGITANDO_ANTES',
       erros: 0,

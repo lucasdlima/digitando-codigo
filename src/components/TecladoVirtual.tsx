@@ -103,7 +103,7 @@ const keyboardLayout = [
 ];
 
 export default function TecladoVirtual() {
-  // Apenas lemos esses dados para renderização visual
+
   const { status, desafioAtual, textoDigitado } = useGameStore();
   const [teclaErrada, setTeclaErrada] = useState<string | null>(null);
   const [teclaCorreta, setTeclaCorreta] = useState<string | null>(null);
@@ -136,7 +136,7 @@ export default function TecladoVirtual() {
 
       if (!charEsperado) return;
 
-      // --- NOVA LÓGICA DE IDENTIFICAÇÃO DE DEDO ---
+      // LÓGICA DE IDENTIFICAÇÃO DE DEDO ---
       let targetKeyId = charEsperado.toLowerCase();
       if (targetKeyId === ' ') targetKeyId = 'space';
       else if (targetKeyId === '\n') targetKeyId = 'enter';
@@ -151,7 +151,6 @@ export default function TecladoVirtual() {
           break;
         }
       }
-      // ---------------------------------------------
 
       let keyId = teclaPressionada.toLowerCase();
       if (keyId === ' ') keyId = 'space';

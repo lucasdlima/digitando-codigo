@@ -4,7 +4,9 @@
     "categoria": "Fundamentos",
     "titulo": "Nível 1: O Clássico",
     "instrucao": "Digite o código inicial. Quando chegar na lacuna, insira a lógica para atingir o resultado.",
+    "dica": "A função print() exibe o valor que está dentro dos parênteses.",
     "outputEsperado": "10",
+    "metasWpm": [15, 30, 45],
     "partes": {
       "antes": "print(",
       "lacuna": "10",
@@ -16,7 +18,9 @@
     "categoria": "Fundamentos",
     "titulo": "Nível 2: Operações Básicas",
     "instrucao": "Complete a equação matemática para atingir o resultado.",
+    "dica": "Pense em qual número somado a 20 resulta em 42.",
     "outputEsperado": "42",
+    "metasWpm": [20, 40, 60],
     "partes": {
       "antes": "print(20 + ",
       "lacuna": "22",
@@ -28,7 +32,9 @@
     "categoria": "Fundamentos",
     "titulo": "Nível 3: Trocando os Valores",
     "instrucao": "Complete a lacuna para trocar corretamente os valores das variáveis.",
+    "dica": "Use uma variável auxiliar para armazenar o valor de 'a' antes de trocá-lo.",
     "outputEsperado": "15 10",
+    "metasWpm": [20, 35, 55],
     "partes": {
       "antes": "a = 10\nb = 15\naux = ",
       "lacuna": "a",
@@ -40,7 +46,9 @@
     "categoria": "Estruturas de Dados",
     "titulo": "Nível 1: Índices de Lista",
     "instrucao": "Acesse o segundo elemento da lista.",
+    "dica": "Lembre-se de que os índices começam em 0.",
     "outputEsperado": "Maçã",
+    "metasWpm": [15, 30, 45],
     "partes": {
       "antes": "print([\"Banana\", \"Maçã\", \"Uva\"][",
       "lacuna": "1",
@@ -52,6 +60,8 @@
     "categoria": "Estruturas de Dados",
     "titulo": "Nível 2: Lista Dentro da Lista",
     "instrucao": "Complete a lacuna para acessar corretamente o valor esperado.",
+    "dica": "Primeiro escolha a lista que contém 'Python' e depois o elemento dentro dela.",
+    "metasWpm": [20, 40, 60],
     "outputEsperado": "Python",
     "partes": {
       "antes": "cursos = [[\"HTML\", \"CSS\"], [\"Python\", \"SQL\"]]\nprint(cursos",
@@ -64,7 +74,9 @@
     "categoria": "Estruturas de Dados",
     "titulo": "Nível 3: Navegando na Estrutura",
     "instrucao": "Preencha a lacuna para acessar corretamente o valor esperado.",
+    "dica": "Use a chave do dicionário para acessar a lista e depois o índice do nome 'Maria'.",
     "outputEsperado": "Maria",
+    "metasWpm": [20, 35, 55],
     "partes": {
       "antes": "dados = {\n \"usuarios\": [\"Paulo\", \"Maria\", \"Ana\"]\n}\nprint(dados",
       "lacuna": "[\"usuarios\"][1]",
@@ -76,7 +88,9 @@
     "categoria": "Lógica e Repetição",
     "titulo": "Nível 1: Estruturas de Repetição",
     "instrucao": "Complete a estrutura do loop range e o incremento para somar os números de 1 a 100.",
+    "dica": "Crie um range que começar em 1 e terminar em 100. Lembre-se de que o valor final do range não é incluído.",
     "outputEsperado": "5050",
+    "metasWpm": [15, 30, 45],
     "partes": {
       "antes": "soma = 0\nfor numero in ",
       "lacuna": "range(1, 101):\n    soma += numero",
@@ -88,7 +102,9 @@
     "categoria": "Lógica e Repetição",
     "titulo": "Nível 2: Somando Apenas os Pares",
     "instrucao": "Complete a condição para somar apenas os números pares de 1 a 10.",
+    "dica": "Um número é par quando o resto da divisão por 2 é igual a 0.",
     "outputEsperado": "30",
+    "metasWpm": [20, 40, 60],
     "partes": {
       "antes": "soma = 0\nfor numero in range(1, 11):\n if ",
       "lacuna": "numero % 2 == 0:\n\tsoma += numero",
@@ -100,7 +116,9 @@
     "categoria": "Lógica e Repetição",
     "titulo": "Nível 3: Contando Caracteres",
     "instrucao": "Complete a lacuna para contar quantas vezes a letra 'a' aparece na string.",
+    "dica": "Use um loop para percorrer cada letra da string e um contador para contar as ocorrências da letra 'a'.",
     "outputEsperado": "3",
+    "metasWpm": [20, 35, 55],
     "partes": {
       "antes": "texto = \"banana\"\ncontador = 0\nfor letra in texto:\n if ",
       "lacuna": "letra == 'a':\n        contador += 1",

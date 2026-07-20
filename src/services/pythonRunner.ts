@@ -1,6 +1,5 @@
 // src/services/pythonRunner.ts
 
-// Como importamos via script tag, dizemos ao TypeScript que a variável global Sk existe
 declare const Sk: any;
 
 export const executarPython = (codigo: string): Promise<string> => {

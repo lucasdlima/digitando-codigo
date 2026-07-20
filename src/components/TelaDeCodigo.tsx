@@ -24,7 +24,10 @@ export default function TelaDeCodigo() {
     lacunaPreenchida,
     status, 
     erros, 
-    validarLacuna 
+    validarLacuna,
+    mensagemErroConsole,
+    dicaExibida,
+    mostrarDica
   } = useGameStore();
 
   const [inputLacuna, setInputLacuna] = useState('');
@@ -108,7 +111,14 @@ export default function TelaDeCodigo() {
         {status === 'VALIDANDO' && <span className="text-yellow-400 font-bold animate-pulse">COMPILANDO...</span>}
       </div>
 
-      {/* Editor de Código (Diminuição da fonte para text-lg/xl e padding p-5) */}
+      {/* --- BLOCO DE ERRO --- */}
+      {mensagemErroConsole && (
+        <div className="w-full bg-red-950/40 border border-red-900/50 p-3 rounded-md text-red-400 font-mono text-xs whitespace-pre-wrap animate-fade-in text-left">
+          <span className="font-bold text-red-500">⚠ Exceção Capturada:</span>
+          <br />
+          {mensagemErroConsole}
+        </div>
+      )}
       <div className={`
         p-5 md:p-6 rounded-xl shadow-2xl font-mono text-lg md:text-xl text-left w-full tracking-wide leading-relaxed whitespace-pre-wrap transition-colors duration-200
         ${isShaking ? 'bg-red-950/20 border border-red-500/50 animate-shake' : 'bg-slate-900 border border-slate-800'}
@@ -139,13 +149,37 @@ export default function TelaDeCodigo() {
               placeholder="Digite a lógica aqui... (Enter pula linha)"
               spellCheck="false"
             />
-            <button
-              onClick={() => validarLacuna(inputLacuna)}
-              disabled={status === 'VALIDANDO'}
-              className="mt-2 self-end px-5 py-1.5 bg-green-600/90 hover:bg-green-500 text-white text-xs uppercase tracking-wider rounded font-bold shadow-md transition-all active:scale-95"
-            >
-              ▶ Executar
-            </button>
+            
+            {/* Bloco de Botões e Dica */}
+            <div className="mt-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 w-full">
+              
+              <div className="flex-1">
+                {/* Botão de Pedir Dica (Só mostra se a dica ainda não foi exibida e se a fase tiver dica) */}
+                {!dicaExibida && desafioAtual.dica && status === 'NA_LACUNA' && (
+                  <button
+                    onClick={mostrarDica}
+                    className="flex items-center gap-1.5 text-xs font-sans text-cyan-400 hover:text-cyan-300 transition-colors border border-cyan-900/50 bg-cyan-950/30 px-3 py-1.5 rounded-full"
+                  >
+                    💡 Pedir uma dica
+                  </button>
+                )}
+
+                {/* Balão de Dica Exibida */}
+                {dicaExibida && desafioAtual.dica && (
+                  <div className="text-xs font-sans text-slate-300 bg-slate-800/80 border border-slate-700 p-2.5 rounded-md animate-fade-in inline-block shadow-lg max-w-lg leading-relaxed">
+                    <span className="font-bold text-cyan-400">💡 Dica:</span> {desafioAtual.dica}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => validarLacuna(inputLacuna)}
+                disabled={status === 'VALIDANDO'}
+                className="self-end md:self-auto px-5 py-2 bg-green-600/90 hover:bg-green-500 text-white text-xs uppercase tracking-wider rounded font-bold shadow-md transition-all active:scale-95 whitespace-nowrap"
+              >
+                ▶ Executar
+              </button>
+            </div>
           </div>
         )}
 

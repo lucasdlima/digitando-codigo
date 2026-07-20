@@ -1,8 +1,10 @@
 export interface Desafio {
   id: number;
-  categoria: string; // <-- NOVA PROPRIEDADE
+  categoria: string;
   titulo: string;
   instrucao: string;
+  dica?: string;
+  metasWpm: [number, number, number];
   outputEsperado: string;
   partes: {
     antes: string;
