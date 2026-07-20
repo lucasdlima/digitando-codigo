@@ -46,7 +46,7 @@ O projeto foi inicializado utilizando **Vite**. Não há necessidade de configur
 
 1. Clone o repositório:
 ```bash
-git clone [https://github.com/SEU_USUARIO/digitando-codigo.git](https://github.com/SEU_USUARIO/digitando-codigo.git)
+git clone [https://github.com/lucasdlima/digitando-codigo.git](https://github.com/lucasdlima/digitando-codigo.git)
 ```
 
 2. Acesse a pasta do projeto:
